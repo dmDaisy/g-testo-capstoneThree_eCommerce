@@ -15,10 +15,16 @@ public class Order
     private String zip;
     private BigDecimal shippingAmount;
 
-    // Optional: list of products in this order
-    private List<Product> products;
+    private List<OrderLineItem> lineItems;
 
-    public Order() {}
+    public Order() {
+        setDate(LocalDateTime.now());
+        setAddress("Default Address");
+        setCity("Default City");
+        setState("Default State");
+        setZip("00000");
+        setShippingAmount(BigDecimal.ZERO);
+    }
 
     public Order(int orderId, int userId, LocalDateTime date, String address, String city, String state, String zip, BigDecimal shippingAmount) {
         this.orderId = orderId;
@@ -97,11 +103,11 @@ public class Order
         this.shippingAmount = shippingAmount;
     }
 
-    public List<Product> getProducts() {
-        return products;
+    public List<OrderLineItem> getLineItems() {
+        return lineItems;
     }
 
-    public void setProducts(List<Product> products) {
-        this.products = products;
+    public void setLineItems(List<OrderLineItem> lineItems) {
+        this.lineItems = lineItems;
     }
 }

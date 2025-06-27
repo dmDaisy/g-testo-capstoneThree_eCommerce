@@ -9,6 +9,7 @@ import org.springframework.web.server.ResponseStatusException;
 import org.yearup.data.OrderDao;
 import org.yearup.data.UserDao;
 import org.yearup.models.Order;
+import org.yearup.models.OrderLineItem;
 import org.yearup.models.User;
 
 import javax.sql.DataSource;
@@ -20,87 +21,132 @@ import java.util.List;
 
 @Component
 public class MySqlOrderDao extends MySqlDaoBase implements OrderDao {
+
     public MySqlOrderDao(DataSource dataSource) {
         super(dataSource);
     }
 
     @Override
-    public Order createOrder(Order order)
+    public Order create(Order order)
     {
-        String insertOrderSql = """
+        String sql = """
             INSERT INTO orders (user_id, date, address, city, state, zip, shipping_amount)
             VALUES (?, ?, ?, ?, ?, ?, ?)
         """;
 
-        String insertItemsSql = """
-            INSERT INTO order_items (order_id, product_id, quantity)
-            VALUES (?, ?, ?)
+        try (Connection conn = getConnection())
+        {
+            PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+            stmt.setInt(1, order.getUserId());
+            stmt.setTimestamp(2, Timestamp.valueOf(order.getDate()));
+            stmt.setString(3, order.getAddress());
+            stmt.setString(4, order.getCity());
+            stmt.setString(5, order.getState());
+            stmt.setString(6, order.getZip());
+            stmt.setBigDecimal(7, order.getShippingAmount());
+
+            stmt.executeUpdate();
+
+            ResultSet keys = stmt.getGeneratedKeys();
+            if (keys.next())
+            {
+                order.setOrderId(keys.getInt(1));
+            }
+
+            return order;
+        }
+        catch (SQLException e)
+        {
+            throw new RuntimeException(e);
+        }
+    }
+
+
+    @Override
+    public void addLineItem(OrderLineItem item)
+    {
+        String sql = """
+            INSERT INTO order_line_items (order_id, product_id, sales_price, quantity, discount)
+            VALUES (?, ?, ?, ?, ?)
         """;
 
-        try (Connection conn = getConnection()) {
-            conn.setAutoCommit(false);
+        try (Connection conn = getConnection())
+        {
+            PreparedStatement stmt = conn.prepareStatement(sql);
+            stmt.setInt(1, item.getOrderId());
+            stmt.setInt(2, item.getProductId());
+            stmt.setBigDecimal(3, item.getSalesPrice());
+            stmt.setInt(4, item.getQuantity());
+            stmt.setBigDecimal(5, item.getDiscount());
 
-            // insert order
-            PreparedStatement orderStmt = conn.prepareStatement(insertOrderSql, Statement.RETURN_GENERATED_KEYS);
-            orderStmt.setInt(1, order.getUserId());
-            orderStmt.setTimestamp(2, Timestamp.valueOf(order.getDate()));
-            orderStmt.setString(3, order.getAddress());
-            orderStmt.setString(4, order.getCity());
-            orderStmt.setString(5, order.getState());
-            orderStmt.setString(6, order.getZip());
-            orderStmt.setBigDecimal(7, order.getShippingAmount());
-            orderStmt.executeUpdate();
-
-            ResultSet keys = orderStmt.getGeneratedKeys();
-            if (keys.next()) {
-                int orderId = keys.getInt(1);
-                order.setOrderId(orderId);
-
-//                // insert order items
-//                for (var item : order.getProducts().entrySet()) {
-//                    int productId = item.getKey();
-//                    int quantity = item.getValue();
-//
-//                    PreparedStatement itemStmt = conn.prepareStatement(insertItemsSql);
-//                    itemStmt.setInt(1, orderId);
-//                    itemStmt.setInt(2, productId);
-//                    itemStmt.setInt(3, quantity);
-//                    itemStmt.executeUpdate();
-//                }
-
-                conn.commit();
-                return order;
-            } else {
-                conn.rollback();
-                throw new SQLException("Failed to insert order");
-            }
-        } catch (SQLException e) {
-            throw new RuntimeException("Failed to create order", e);
+            stmt.executeUpdate();
+        }
+        catch (SQLException e)
+        {
+            throw new RuntimeException(e);
         }
     }
 
     @Override
     public List<Order> getOrdersByUserId(int userId)
     {
+        String sql = "SELECT * FROM orders WHERE user_id = ?";
         List<Order> orders = new ArrayList<>();
 
-        String sql = "SELECT * FROM orders WHERE user_id = ?";
-
-        try (Connection conn = getConnection()) {
+        try (Connection conn = getConnection())
+        {
             PreparedStatement stmt = conn.prepareStatement(sql);
             stmt.setInt(1, userId);
             ResultSet rs = stmt.executeQuery();
 
-            while (rs.next()) {
-                orders.add(mapRow(rs));
+            while (rs.next())
+            {
+                Order order = mapRow(rs);
+                orders.add(order);
             }
-        } catch (SQLException e) {
+        }
+        catch (SQLException e)
+        {
             throw new RuntimeException(e);
         }
 
         return orders;
     }
 
+    @Override
+    public List<OrderLineItem> getLineItemsByOrderId(int orderId)
+    {
+        String sql = "SELECT * FROM order_line_items WHERE order_id = ?";
+        List<OrderLineItem> items = new ArrayList<>();
+
+        try (Connection conn = getConnection())
+        {
+            PreparedStatement stmt = conn.prepareStatement(sql);
+            stmt.setInt(1, orderId);
+            ResultSet rs = stmt.executeQuery();
+
+            while (rs.next())
+            {
+                OrderLineItem item = new OrderLineItem();
+                item.setOrderLineItemId(rs.getInt("order_line_item_id"));
+                item.setOrderId(rs.getInt("order_id"));
+                item.setProductId(rs.getInt("product_id"));
+                item.setSalesPrice(rs.getBigDecimal("sales_price"));
+                item.setQuantity(rs.getInt("quantity"));
+                item.setDiscount(rs.getBigDecimal("discount"));
+
+                items.add(item);
+            }
+        }
+        catch (SQLException e)
+        {
+            throw new RuntimeException(e);
+        }
+
+        return items;
+    }
+
+    // helper method: create an Order object from a ResultSet row
     private Order mapRow(ResultSet rs) throws SQLException {
         return new Order(
                 rs.getInt("order_id"),
