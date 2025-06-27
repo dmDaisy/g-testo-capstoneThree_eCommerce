@@ -59,7 +59,7 @@ public class MySqlProfileDao extends MySqlDaoBase implements ProfileDao
             {
                 return mapRow(rs);
             }
-            else
+            else // user not found
             {
                 return null;
             }
@@ -97,6 +97,7 @@ public class MySqlProfileDao extends MySqlDaoBase implements ProfileDao
         }
     }
 
+    // create a Profile object from a ResultSet row
     private Profile mapRow(ResultSet rs) throws SQLException
     {
         Profile profile = new Profile();
