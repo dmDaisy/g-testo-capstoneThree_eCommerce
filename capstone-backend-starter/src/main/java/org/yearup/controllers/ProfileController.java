@@ -43,6 +43,37 @@ public class ProfileController
         }
     }
 
+    @PostMapping("")
+    public Profile createProfile(@RequestBody Profile profile, Principal principal)
+    {
+        try
+        {
+            String userName = principal.getName();
+            User user = userDao.getByUserName(userName);
+            int userId = user.getId();
+
+            // check if profile exists
+            Profile existing = profileDao.getByUserId(userId);
+            if(existing != null) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Profile already exists.");
+            }
+
+            profile.setUserId(userId);
+
+            // save to DB
+            return profileDao.create(profile);
+        }
+        catch(ResponseStatusException ex) // add this catch to fix bug related to postman test
+        {
+            throw ex;
+        }
+        catch(Exception e)
+        {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Unable to create profile.", e);
+        }
+    }
+
+
     @PutMapping("")
     public void updateProfile(@RequestBody Profile profile, Principal principal)
     {

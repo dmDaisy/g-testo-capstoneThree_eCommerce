@@ -1,0 +1,35 @@
+{
+	"info": {
+		"_postman_id": "2e2db050-09d6-4e3d-8cda-12a66f46e65b",
+		"name": "ProfileController test script",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "43748211",
+		"_collection_link": "https://alex-1956677.postman.co/workspace/Alex's-Workspace~8050e476-4429-4e20-80f9-d94df6be1650/collection/43748211-2e2db050-09d6-4e3d-8cda-12a66f46e65b?action=share&source=collection_link&creator=43748211"
+	},
+	"item": [
+		{
+			"name": "Get profile",
+			"request": {
+				"method": "GET",
+				"header": []
+			},
+			"response": []
+		},
+		{
+			"name": "Create profile(failed)",
+			"request": {
+				"method": "GET",
+				"header": []
+			},
+			"response": []
+		},
+		{
+			"name": "Update profile",
+			"request": {
+				"method": "GET",
+				"header": []
+			},
+			"response": []
+		}
+	]
+}
