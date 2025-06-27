@@ -1,5 +1,7 @@
 package org.yearup.models;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.Map;
@@ -33,6 +35,7 @@ public class ShoppingCart
         return items.get(productId);
     }
 
+    @JsonProperty("total")
     public BigDecimal getTotal()
     {
         BigDecimal total = items.values()
