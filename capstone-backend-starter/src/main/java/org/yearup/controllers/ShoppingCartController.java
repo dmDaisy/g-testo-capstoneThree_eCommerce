@@ -13,6 +13,7 @@ import org.yearup.models.ShoppingCartItem;
 import org.yearup.models.User;
 
 import java.security.Principal;
+import java.util.Map;
 
 // convert this class to a REST controller
 @RestController
@@ -107,24 +108,67 @@ public class ShoppingCartController
     // add a PUT method to update an existing product in the cart - the url should be
     // https://localhost:8080/cart/products/15 (15 is the productId to be updated)
     // the BODY should be a ShoppingCartItem - quantity is the only value that will be updated
+//    @PutMapping("/products/{productId}")
+//    public void updateCartItem(@PathVariable int productId,
+//                               @RequestParam int quantity,
+//                               Principal principal)
+//    {
+//        try
+//        {
+//            if (quantity < 1)
+//            {
+//                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Oops, haven't implemented removing item from cart yet...");
+//            }
+//            else{
+//                String userName = principal.getName();
+//                User user = userDao.getByUserName(userName);
+//                int userId = user.getId();
+//
+//                shoppingCartDao.updateQuantity(userId, productId, quantity);
+//            }
+//        }
+//        catch (IllegalStateException ex)
+//        {
+//            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, ex.getMessage());
+//        }
+//        catch(Exception e)
+//        {
+//            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Oops... our bad.");
+//        }
+//    }
+
     @PutMapping("/products/{productId}")
-    public void updateCartItem(@PathVariable int productId,
-                               @RequestParam int quantity,
-                               Principal principal)
+    public ShoppingCart updateCartItem(
+            @PathVariable int productId,
+            @RequestBody Map<String, Integer> body,
+            Principal principal
+    )
     {
         try
         {
-            if (quantity < 1)
-            {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Oops, haven't implemented removing item from cart yet...");
-            }
-            else{
-                String userName = principal.getName();
-                User user = userDao.getByUserName(userName);
-                int userId = user.getId();
+            String userName = principal.getName();
+            User user = userDao.getByUserName(userName);
+            int userId = user.getId();
 
-                shoppingCartDao.updateQuantity(userId, productId, quantity);
+            // get quantity from JSON body
+            Integer quantity = body.get("quantity");
+
+            if (quantity == null || quantity < 1)
+            {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Product doesn't exist or out of stock. :(");
             }
+
+            // The shopping cart item should only be updated if the user has already added the product to their cart
+            ShoppingCart cart = shoppingCartDao.getByUserId(userId);
+            if (!cart.contains(productId))
+            {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "You can only update products already in your cart. :(");
+            }
+
+            shoppingCartDao.updateQuantity(userId, productId, quantity);
+
+            // return updated cart
+            return shoppingCartDao.getByUserId(userId);
         }
         catch (IllegalStateException ex)
         {
@@ -157,6 +201,4 @@ public class ShoppingCartController
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Oops... our bad.");
         }
     }
-
-
 }
