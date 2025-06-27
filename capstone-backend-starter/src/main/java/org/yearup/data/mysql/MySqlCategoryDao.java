@@ -81,7 +81,7 @@ public class MySqlCategoryDao extends MySqlDaoBase implements CategoryDao
 
             int rows = statement.executeUpdate();
 
-            if (rows > 0)
+            if (rows > 0) // successfully created
             {
                 ResultSet keys = statement.getGeneratedKeys();
                 if (keys.next())
@@ -139,7 +139,7 @@ public class MySqlCategoryDao extends MySqlDaoBase implements CategoryDao
         }
     }
 
-
+    // makes Category object from ResultSet row
     private Category mapRow(ResultSet row) throws SQLException
     {
         int categoryId = row.getInt("category_id");

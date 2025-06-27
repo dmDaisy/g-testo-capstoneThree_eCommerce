@@ -62,7 +62,7 @@ public class ProductsController
     }
 
     @PostMapping()
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     public Product addProduct(@RequestBody Product product)
     {
         try
@@ -76,12 +76,12 @@ public class ProductsController
     }
 
     @PutMapping("{id}")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     public void updateProduct(@PathVariable int id, @RequestBody Product product)
     {
         try
         {
-            product.setProductId(id);
+            product.setProductId(id); // !
             productDao.update(id, product);
         }
         catch(Exception ex)
@@ -91,7 +91,7 @@ public class ProductsController
     }
 
     @DeleteMapping("{id}")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     public void deleteProduct(@PathVariable int id)
     {
         try

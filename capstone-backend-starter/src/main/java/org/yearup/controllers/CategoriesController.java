@@ -78,5 +78,4 @@ public class CategoriesController
     public void deleteCategory(@PathVariable int id) {
         categoryDao.delete(id);
     }
-
 }
